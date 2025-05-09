@@ -1,7 +1,14 @@
 import pandas as pd
+import os
+
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+# Define input and output paths using absolute paths
+input_csv = os.path.join(project_root, 'data', 'AAPL_daily.csv')
+output_csv = os.path.join(project_root, 'data', 'AAPL_daily_cleaned.csv')
 
 # Load the CSV with correct delimiter handling
-df = pd.read_csv("../data/AAPL_daily.csv")
+df = pd.read_csv(input_csv)
 
 # Strip column names of leading/trailing spaces
 df.columns = df.columns.str.strip()
@@ -25,6 +32,6 @@ df.drop_duplicates(inplace=True)
 df.sort_values('Date', inplace=True)
 
 # Save the cleaned DataFrame
-df.to_csv("../data/AAPL_daily_cleaned.csv", index=False)
+df.to_csv(output_csv, index=False)
 
-print("Cleaned data saved to 'data/AAPL_daily_cleaned.csv'")
+print("Cleaned data saved to: {output_csv}")
