@@ -1,0 +1,100 @@
+pipeline {
+    agent any
+    
+    parameters {
+        choice(name: 'DEPLOY_ENV', choices: ['dev', 'test', 'prod'], description: 'Deployment Environment')
+    }
+    
+    environment {
+        DOCKER_HUB_CREDS = credentials('docker-hub-credentials')
+        IMAGE_NAME = 'haniyatariq65/model-api'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        DEPLOY_ENV = "${params.DEPLOY_ENV ?: 'dev'}"  // Default to 'dev' if not specified
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Setup API Directory') {
+            steps {
+                // Create API directory if it doesn't exist
+                sh "mkdir -p api"
+                
+                // Copy the app.py file to the api directory
+                sh "cp -f ${WORKSPACE}/app.py ${WORKSPACE}/api/ || true"
+                
+                // Copy requirements.txt to api directory
+                sh "cp -f ${WORKSPACE}/requirements.txt ${WORKSPACE}/api/ || true"
+                
+                // Copy config directory to api directory
+                sh "cp -r ${WORKSPACE}/config ${WORKSPACE}/api/ || true"
+                
+                // Copy models directory (if needed)
+                sh "mkdir -p api/models"
+                sh "cp -f ${WORKSPACE}/models/linear_regression_model.joblib ${WORKSPACE}/api/models/ || true"
+            }
+        }
+        
+        // stage('Configure Environment') {
+        //     steps {
+        //         script {
+        //             // Copy the appropriate environment file
+        //             sh "cp -f ${WORKSPACE}/config/env.${env.DEPLOY_ENV} ${WORKSPACE}/api/.env || true"
+        //         }
+        //     }
+        // }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build the Docker image
+                    sh "docker build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} -f api/Dockerfile ."
+                    sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.IMAGE_NAME}:latest"
+                }
+            }
+        }
+        
+        stage('Test Docker Image') {
+            steps {
+                script {
+                    // Run a simple test to check if the container starts
+                    sh "docker run --name test-container -d -p 8000:8000 ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                    
+                    // Wait for container to start
+                    sh "sleep 5"
+                    
+                    // Test the health endpoint
+                    sh "curl -f http://localhost:8000/health || exit 1"
+                    
+                    // Stop and remove test container
+                    sh "docker stop test-container && docker rm test-container"
+                }
+            }
+        }
+        
+        stage('Push to Docker Hub') {
+            steps {
+                sh "echo ${DOCKER_HUB_CREDS_PSW} | docker login -u ${DOCKER_HUB_CREDS_USR} --password-stdin"
+                sh "docker push ${env.IMAGE_NAME}:${env.IMAGE_TAG}"
+                sh "docker push ${env.IMAGE_NAME}:latest"
+            }
+        }
+    }
+    
+    post {
+        always {
+            sh "docker logout"
+            sh "docker rmi ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.IMAGE_NAME}:latest || true"
+            
+            // Clean up any test containers that might be left
+            sh "docker rm -f test-container || true"
+            
+            // Archive artifacts
+            archiveArtifacts artifacts: 'api/**', allowEmptyArchive: true
+        }
+    }
+}
