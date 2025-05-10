@@ -39,14 +39,14 @@ pipeline {
             }
         }
         
-        stage('Configure Environment') {
-            steps {
-                script {
-                    // Copy the appropriate environment file
-                    sh "cp -f ${WORKSPACE}/config/env.${env.DEPLOY_ENV} ${WORKSPACE}/api/.env || true"
-                }
-            }
-        }
+        // stage('Configure Environment') {
+        //     steps {
+        //         script {
+        //             // Copy the appropriate environment file
+        //             sh "cp -f ${WORKSPACE}/config/env.${env.DEPLOY_ENV} ${WORKSPACE}/api/.env || true"
+        //         }
+        //     }
+        // }
         
         stage('Build Docker Image') {
             steps {
