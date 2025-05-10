@@ -1,0 +1,5 @@
+outs:
+- md5: 2c8b5f469da74be96a9c7d21733bec1c
+  size: 4952
+  hash: md5
+  path: AAPL_daily_cleaned.csv
