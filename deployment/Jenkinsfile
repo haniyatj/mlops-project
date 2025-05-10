@@ -1,10 +1,15 @@
 pipeline {
     agent any
     
+    parameters {
+        choice(name: 'DEPLOY_ENV', choices: ['dev', 'test', 'prod'], description: 'Deployment Environment')
+    }
+    
     environment {
         DOCKER_HUB_CREDS = credentials('docker-hub-credentials')
-        IMAGE_NAME = 'your-dockerhub-username/stock-prediction-api'
+        IMAGE_NAME = 'haniyatariq65/model-api'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
+        DEPLOY_ENV = "${params.DEPLOY_ENV ?: 'dev'}"  // Default to 'dev' if not specified
     }
     
     stages {
@@ -24,6 +29,22 @@ pipeline {
                 
                 // Copy requirements.txt to api directory
                 sh "cp -f ${WORKSPACE}/requirements.txt ${WORKSPACE}/api/ || true"
+                
+                // Copy config directory to api directory
+                sh "cp -r ${WORKSPACE}/config ${WORKSPACE}/api/ || true"
+                
+                // Copy models directory (if needed)
+                sh "mkdir -p api/models"
+                sh "cp -f ${WORKSPACE}/models/linear_regression_model.joblib ${WORKSPACE}/api/models/ || true"
+            }
+        }
+        
+        stage('Configure Environment') {
+            steps {
+                script {
+                    // Copy the appropriate environment file
+                    sh "cp -f ${WORKSPACE}/config/env.${env.DEPLOY_ENV} ${WORKSPACE}/api/.env || true"
+                }
             }
         }
         
@@ -31,7 +52,7 @@ pipeline {
             steps {
                 script {
                     // Build the Docker image
-                    sh "docker build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} ."
+                    sh "docker build -t ${env.IMAGE_NAME}:${env.IMAGE_TAG} -f api/Dockerfile ."
                     sh "docker tag ${env.IMAGE_NAME}:${env.IMAGE_TAG} ${env.IMAGE_NAME}:latest"
                 }
             }
