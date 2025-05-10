@@ -58,7 +58,7 @@ pipeline {
                     docker run --name test-container -d -p 8000:8000 %IMAGE_NAME%:%IMAGE_TAG%
                     set RETRIES=10
                     :waitloop
-                    curl -f http://localhost:8000/health >nul 2>nul
+                    curl -f http://localhost:8000/health
                     if %ERRORLEVEL% equ 0 (
                         echo Server is healthy.
                     ) else (
@@ -75,7 +75,6 @@ pipeline {
 
                     docker stop test-container
                     docker rm test-container
-
                 '''
             }
         }
