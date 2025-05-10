@@ -56,12 +56,26 @@ pipeline {
             steps {
                 bat '''
                     docker run --name test-container -d -p 8000:8000 %IMAGE_NAME%:%IMAGE_TAG%
-                    timeout /T 5
-
-                    curl -f http://localhost:8000/health || exit /B 1
+                    set RETRIES=10
+                    :waitloop
+                    curl -f http://localhost:8000/health >nul 2>nul
+                    if %ERRORLEVEL% equ 0 (
+                        echo Server is healthy.
+                    ) else (
+                        echo Waiting for server to respond...
+                        timeout /T 3 >nul
+                        set /A RETRIES=%RETRIES%-1
+                        if %RETRIES% leq 0 (
+                            echo Health check failed. Container logs:
+                            docker logs test-container
+                            exit /B 1
+                        )
+                        goto waitloop
+                    )
 
                     docker stop test-container
                     docker rm test-container
+
                 '''
             }
         }
