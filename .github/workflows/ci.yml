@@ -152,33 +152,16 @@ jobs:
 
           echo "Making scripts executable inside the container..."
           docker compose -f docker-compose-test.yml exec -T airflow bash -c "mkdir -p /opt/airflow/scripts"
-          docker compose -f docker-compose-test.yml exec -T airflow bash -c "touch /opt/airflow/scripts/fetch_stock.py /opt/airflow/scripts/clean_stock.py"
+
+          # Fix the permissions for the scripts directory
+          docker compose -f docker-compose-test.yml exec -T airflow bash -c "chown -R airflow:airflow /opt/airflow/scripts"
           docker compose -f docker-compose-test.yml exec -T airflow bash -c "chmod +x /opt/airflow/scripts/*.py"
+
+          # Create the script files
+          docker compose -f docker-compose-test.yml exec -T airflow bash -c "touch /opt/airflow/scripts/fetch_stock.py /opt/airflow/scripts/clean_stock.py"
 
           echo "Directory structure:"
           docker compose -f docker-compose-test.yml exec -T airflow bash -c "find /opt/airflow -type f | sort"
-
-      - name: Copy files to container
-        run: |
-          echo "Copying DAG file to container..."
-          echo "DAG file contents:"
-          cat dags/data_collection_preprocessing_pipeline.py
-          docker compose -f docker-compose-test.yml cp dags/data_collection_preprocessing_pipeline.py airflow:/opt/airflow/dags/
-
-          echo "Copying script files to container..."
-          docker compose -f docker-compose-test.yml cp scripts/fetch_stock.py airflow:/opt/airflow/scripts/
-          docker compose -f docker-compose-test.yml cp scripts/clean_stock.py airflow:/opt/airflow/scripts/
-
-          echo "Copying test files to container..."
-          docker compose -f docker-compose-test.yml cp tests/test_data_collection_dag.py airflow:/opt/airflow/tests/
-
-          echo "Setting permissions..."
-          docker compose -f docker-compose-test.yml exec -T airflow bash -c "chmod +x /opt/airflow/scripts/*.py"
-
-          echo "Verifying files in container:"
-          docker compose -f docker-compose-test.yml exec -T airflow bash -c "ls -la /opt/airflow/dags"
-          docker compose -f docker-compose-test.yml exec -T airflow bash -c "ls -la /opt/airflow/scripts"
-          docker compose -f docker-compose-test.yml exec -T airflow bash -c "ls -la /opt/airflow/tests"
 
       - name: Run tests
         run: |
