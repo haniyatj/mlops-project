@@ -10,7 +10,7 @@ on:
 
 jobs:
   lint-and-test:
-    runs-on: windows-latest  # Change to Windows runner
+    runs-on: windows-latest  
 
     services:
       postgres:
