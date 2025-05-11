@@ -15,7 +15,8 @@ import pandas as pd
 import joblib
 from pathlib import Path
 import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # Disables oneDNN optimizations
+
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"  # Disables oneDNN optimizations
 
 # Set the MLflow tracking URI
 mlflow.set_tracking_uri("http://localhost:5000")
@@ -25,34 +26,34 @@ def load_data(file_path):
     """Load and prepare stock data from CSV file."""
     df = pd.read_csv(file_path)
     # Check if Date column exists
-    if 'Date' in df.columns:
-        df['Date'] = pd.to_datetime(df['Date'])
-        df.set_index('Date', inplace=True)
+    if "Date" in df.columns:
+        df["Date"] = pd.to_datetime(df["Date"])
+        df.set_index("Date", inplace=True)
     # Print column names for debugging
     print(f"Available columns in the dataset: {df.columns.tolist()}")
     return df
 
 
-def create_features(df, target_col='close', window_size=5):
+def create_features(df, target_col="close", window_size=5):
     """Create features for prediction based on historical window."""
     df_copy = df.copy()
 
     print(f"Target column: {target_col}")
 
     # Add technical indicators
-    df_copy['MA5'] = df_copy[target_col].rolling(window=5).mean()
-    df_copy['MA20'] = df_copy[target_col].rolling(window=20).mean()
-    df_copy['RSI'] = compute_rsi(df_copy[target_col])
+    df_copy["MA5"] = df_copy[target_col].rolling(window=5).mean()
+    df_copy["MA20"] = df_copy[target_col].rolling(window=20).mean()
+    df_copy["RSI"] = compute_rsi(df_copy[target_col])
 
     # Create lagged features
     for i in range(1, window_size + 1):
-        df_copy[f'{target_col}_lag_{i}'] = df_copy[target_col].shift(i)
+        df_copy[f"{target_col}_lag_{i}"] = df_copy[target_col].shift(i)
 
     # Add volatility features
-    df_copy['volatility'] = df_copy[target_col].rolling(window=10).std()
+    df_copy["volatility"] = df_copy[target_col].rolling(window=10).std()
 
     # Add price momentum
-    df_copy['momentum'] = df_copy[target_col].pct_change(periods=5)
+    df_copy["momentum"] = df_copy[target_col].pct_change(periods=5)
 
     # Remove rows with NaN values
     df_copy.dropna(inplace=True)
@@ -85,17 +86,14 @@ def prepare_data_for_lstm(features, target, lookback=5):
     """Prepare data for LSTM model by reshaping into time sequences."""
     X, y = [], []
     for i in range(len(features) - lookback):
-        X.append(features.iloc[i:i + lookback].values)
+        X.append(features.iloc[i : i + lookback].values)
         y.append(target.iloc[i + lookback])
     return np.array(X), np.array(y)
 
 
 def train_linear_regression(
-        X_train,
-        X_test,
-        y_train,
-        y_test,
-        experiment_name="stock_prediction"):
+    X_train, X_test, y_train, y_test, experiment_name="stock_prediction"
+):
     """Train and evaluate a linear regression model with MLflow tracking."""
     with mlflow.start_run(run_name="linear_regression") as run:
         # Train the model
@@ -128,11 +126,11 @@ def train_linear_regression(
 
         # Plot predictions
         plt.figure(figsize=(10, 6))
-        plt.plot(y_test.values, label='Actual')
-        plt.plot(y_test_pred, label='Predicted')
-        plt.title('Linear Regression: Actual vs Predicted')
-        plt.xlabel('Time')
-        plt.ylabel('Stock Price')
+        plt.plot(y_test.values, label="Actual")
+        plt.plot(y_test_pred, label="Predicted")
+        plt.title("Linear Regression: Actual vs Predicted")
+        plt.xlabel("Time")
+        plt.ylabel("Stock Price")
         plt.legend()
 
         # Save and log the plot
@@ -146,11 +144,8 @@ def train_linear_regression(
 
 
 def train_random_forest(
-        X_train,
-        X_test,
-        y_train,
-        y_test,
-        experiment_name="stock_prediction"):
+    X_train, X_test, y_train, y_test, experiment_name="stock_prediction"
+):
     """Train and evaluate a Random Forest model with MLflow tracking."""
     with mlflow.start_run(run_name="random_forest") as run:
         # Train the model with hyperparameters
@@ -159,7 +154,7 @@ def train_random_forest(
             max_depth=10,
             min_samples_split=5,
             min_samples_leaf=2,
-            random_state=42
+            random_state=42,
         )
         model.fit(X_train, y_train)
 
@@ -189,17 +184,21 @@ def train_random_forest(
         mlflow.log_metric("test_r2", test_r2)
 
         # Log feature importances
-        feature_importances = pd.DataFrame({
-            'Feature': X_train.columns,
-            'Importance': model.feature_importances_
-        }).sort_values(by='Importance', ascending=False)
+        feature_importances = pd.DataFrame(
+            {
+                "Feature": X_train.columns,
+                "Importance": model.feature_importances_,
+            }
+        ).sort_values(by="Importance", ascending=False)
 
         # Create feature importance plot
         plt.figure(figsize=(10, 8))
-        plt.barh(feature_importances['Feature'][:10],
-                 feature_importances['Importance'][:10])
-        plt.xlabel('Importance')
-        plt.title('Top 10 Feature Importances')
+        plt.barh(
+            feature_importances["Feature"][:10],
+            feature_importances["Importance"][:10],
+        )
+        plt.xlabel("Importance")
+        plt.title("Top 10 Feature Importances")
         plt.tight_layout()
 
         # Save and log the feature importance plot
@@ -213,11 +212,11 @@ def train_random_forest(
 
         # Plot predictions
         plt.figure(figsize=(10, 6))
-        plt.plot(y_test.values, label='Actual')
-        plt.plot(y_test_pred, label='Predicted')
-        plt.title('Random Forest: Actual vs Predicted')
-        plt.xlabel('Time')
-        plt.ylabel('Stock Price')
+        plt.plot(y_test.values, label="Actual")
+        plt.plot(y_test_pred, label="Predicted")
+        plt.title("Random Forest: Actual vs Predicted")
+        plt.xlabel("Time")
+        plt.ylabel("Stock Price")
         plt.legend()
 
         # Save and log the plot
@@ -230,22 +229,28 @@ def train_random_forest(
         return model, run.info.run_id
 
 
-def train_lstm_model(X_train, X_test, y_train, y_test,
-                     experiment_name="stock_prediction"):
+def train_lstm_model(
+    X_train, X_test, y_train, y_test, experiment_name="stock_prediction"
+):
     """Train and evaluate an LSTM model with MLflow tracking."""
     with mlflow.start_run(run_name="lstm_model") as run:
         # Define LSTM model architecture
-        model = Sequential([LSTM(units=50,
-                                 return_sequences=True,
-                                 input_shape=(X_train.shape[1],
-                                              X_train.shape[2])),
-                            Dropout(0.2),
-                            LSTM(units=50),
-                            Dropout(0.2),
-                            Dense(units=1)])
+        model = Sequential(
+            [
+                LSTM(
+                    units=50,
+                    return_sequences=True,
+                    input_shape=(X_train.shape[1], X_train.shape[2]),
+                ),
+                Dropout(0.2),
+                LSTM(units=50),
+                Dropout(0.2),
+                Dense(units=1),
+            ]
+        )
 
         # Compile the model
-        model.compile(optimizer='adam', loss='mean_squared_error')
+        model.compile(optimizer="adam", loss="mean_squared_error")
 
         # Log model parameters
         mlflow.log_param("model_type", "LSTM")
@@ -256,18 +261,17 @@ def train_lstm_model(X_train, X_test, y_train, y_test,
 
         # Train the model with early stopping
         early_stopping = tf.keras.callbacks.EarlyStopping(
-            monitor='val_loss',
-            patience=10,
-            restore_best_weights=True
+            monitor="val_loss", patience=10, restore_best_weights=True
         )
 
         history = model.fit(
-            X_train, y_train,
+            X_train,
+            y_train,
             epochs=50,  # Reduced from 100 for faster execution
             batch_size=32,
             validation_data=(X_test, y_test),
             callbacks=[early_stopping],
-            verbose=1
+            verbose=1,
         )
 
         # Make predictions
@@ -293,11 +297,11 @@ def train_lstm_model(X_train, X_test, y_train, y_test,
 
         # Plot training history
         plt.figure(figsize=(10, 6))
-        plt.plot(history.history['loss'], label='Training Loss')
-        plt.plot(history.history['val_loss'], label='Validation Loss')
-        plt.title('LSTM Model: Training and Validation Loss')
-        plt.xlabel('Epoch')
-        plt.ylabel('Loss')
+        plt.plot(history.history["loss"], label="Training Loss")
+        plt.plot(history.history["val_loss"], label="Validation Loss")
+        plt.title("LSTM Model: Training and Validation Loss")
+        plt.xlabel("Epoch")
+        plt.ylabel("Loss")
         plt.legend()
 
         history_plot_path = "lstm_training_history.png"
@@ -307,11 +311,11 @@ def train_lstm_model(X_train, X_test, y_train, y_test,
 
         # Plot predictions
         plt.figure(figsize=(10, 6))
-        plt.plot(y_test, label='Actual')
-        plt.plot(y_test_pred, label='Predicted')
-        plt.title('LSTM: Actual vs Predicted')
-        plt.xlabel('Time')
-        plt.ylabel('Stock Price')
+        plt.plot(y_test, label="Actual")
+        plt.plot(y_test_pred, label="Predicted")
+        plt.title("LSTM: Actual vs Predicted")
+        plt.xlabel("Time")
+        plt.ylabel("Stock Price")
         plt.legend()
 
         pred_plot_path = "lstm_predictions.png"
@@ -321,6 +325,7 @@ def train_lstm_model(X_train, X_test, y_train, y_test,
 
         print(f"LSTM Test RMSE: {test_rmse:.4f}")
         return model, run.info.run_id
+
 
 # Modify the main() function to save the best model
 
@@ -334,14 +339,14 @@ def main():
     models_dir.mkdir(exist_ok=True)
 
     # Load data
-    data_path = os.path.join('data', 'AAPL_daily_cleaned.csv')
+    data_path = os.path.join("data", "AAPL_daily_cleaned.csv")
     print(f"Loading data from: {data_path}")
 
     try:
         stock_data = load_data(data_path)
 
         # Create features - explicitly passing 'close' as target column
-        features, target = create_features(stock_data, target_col='close')
+        features, target = create_features(stock_data, target_col="close")
 
         # Train/test split for traditional ML
         X_train, X_test, y_train, y_test = train_test_split(
@@ -350,11 +355,13 @@ def main():
 
         # Train Linear Regression model
         lr_model, lr_run_id = train_linear_regression(
-            X_train, X_test, y_train, y_test)
+            X_train, X_test, y_train, y_test
+        )
 
         # Train Random Forest model
         rf_model, rf_run_id = train_random_forest(
-            X_train, X_test, y_train, y_test)
+            X_train, X_test, y_train, y_test
+        )
 
         # Prepare data for LSTM
         scaler_X = MinMaxScaler()
@@ -365,11 +372,11 @@ def main():
 
         # Convert to DataFrame to maintain time indexing
         X_scaled_df = pd.DataFrame(
-            X_scaled,
-            index=features.index,
-            columns=features.columns)
+            X_scaled, index=features.index, columns=features.columns
+        )
         y_scaled_df = pd.DataFrame(
-            y_scaled, index=target.index, columns=['close'])
+            y_scaled, index=target.index, columns=["close"]
+        )
 
         # Train/test split for LSTM
         train_size = int(len(X_scaled_df) * 0.8)
@@ -381,19 +388,24 @@ def main():
         # Prepare sequences for LSTM
         lookback = 5
         X_train_lstm, y_train_lstm = prepare_data_for_lstm(
-            X_train_scaled, y_train_scaled, lookback)
+            X_train_scaled, y_train_scaled, lookback
+        )
         X_test_lstm, y_test_lstm = prepare_data_for_lstm(
-            X_test_scaled, y_test_scaled, lookback)
+            X_test_scaled, y_test_scaled, lookback
+        )
 
         # Reshape for LSTM [samples, time steps, features]
         X_train_lstm = X_train_lstm.reshape(
-            (X_train_lstm.shape[0], lookback, X_train_scaled.shape[1]))
+            (X_train_lstm.shape[0], lookback, X_train_scaled.shape[1])
+        )
         X_test_lstm = X_test_lstm.reshape(
-            (X_test_lstm.shape[0], lookback, X_test_scaled.shape[1]))
+            (X_test_lstm.shape[0], lookback, X_test_scaled.shape[1])
+        )
 
         # Train LSTM model
         lstm_model, lstm_run_id = train_lstm_model(
-            X_train_lstm, X_test_lstm, y_train_lstm, y_test_lstm)
+            X_train_lstm, X_test_lstm, y_train_lstm, y_test_lstm
+        )
 
         print(f"Linear Regression Run ID: {lr_run_id}")
         print(f"Random Forest Run ID: {rf_run_id}")
@@ -408,36 +420,36 @@ def main():
         lstm_metrics = client.get_run(lstm_run_id).data.metrics
 
         # Choose the best model based on test RMSE
-        best_rmse = float('inf')
+        best_rmse = float("inf")
         best_model = None
         best_model_type = None
         best_scalers = None
 
-        if lr_metrics['test_rmse'] < best_rmse:
-            best_rmse = lr_metrics['test_rmse']
+        if lr_metrics["test_rmse"] < best_rmse:
+            best_rmse = lr_metrics["test_rmse"]
             best_model = lr_model
-            best_model_type = 'linear_regression'
-            best_model_name = 'Linear Regression'
+            best_model_type = "linear_regression"
+            best_model_name = "Linear Regression"
 
-        if rf_metrics['test_rmse'] < best_rmse:
-            best_rmse = rf_metrics['test_rmse']
+        if rf_metrics["test_rmse"] < best_rmse:
+            best_rmse = rf_metrics["test_rmse"]
             best_model = rf_model
-            best_model_type = 'random_forest'
-            best_model_name = 'Random Forest'
+            best_model_type = "random_forest"
+            best_model_name = "Random Forest"
 
-        if lstm_metrics['test_rmse'] < best_rmse:
-            best_rmse = lstm_metrics['test_rmse']
+        if lstm_metrics["test_rmse"] < best_rmse:
+            best_rmse = lstm_metrics["test_rmse"]
             best_model = lstm_model
-            best_model_type = 'lstm'
-            best_model_name = 'LSTM'
+            best_model_type = "lstm"
+            best_model_name = "LSTM"
             best_scalers = (scaler_X, scaler_y)
 
         # Save the best model to disk
-        if best_model_type in ['linear_regression', 'random_forest']:
+        if best_model_type in ["linear_regression", "random_forest"]:
             model_path = models_dir / f"{best_model_type}_model.joblib"
             joblib.dump(best_model, model_path)
             print(f"Saved {best_model_name} model to {model_path}")
-        elif best_model_type == 'lstm':
+        elif best_model_type == "lstm":
             # Save Keras model
             model_path = models_dir / "lstm_model.keras"
             best_model.save(model_path)
@@ -448,29 +460,35 @@ def main():
             joblib.dump(best_scalers[0], scaler_X_path)
             joblib.dump(best_scalers[1], scaler_y_path)
             print(
-              f"Saved LSTM model to {model_path} " + \
-              f"and scalers to {scaler_X_path}, {scaler_y_path}")
-
+                f"Saved LSTM model to {model_path} "
+                + f"and scalers to {scaler_X_path}, {scaler_y_path}"
+            )
 
         # Register the best model in MLflow Model Registry
-        model_name, run_id, artifact_path, registry_name = best_model_name, None, None, None
+        model_name, run_id, artifact_path, registry_name = (
+            best_model_name,
+            None,
+            None,
+            None,
+        )
 
-        if best_model_type == 'linear_regression':
+        if best_model_type == "linear_regression":
             run_id = lr_run_id
-            artifact_path = 'linear_regression_model'
-            registry_name = 'stock_prediction_linear_regression'
-        elif best_model_type == 'random_forest':
+            artifact_path = "linear_regression_model"
+            registry_name = "stock_prediction_linear_regression"
+        elif best_model_type == "random_forest":
             run_id = rf_run_id
-            artifact_path = 'random_forest_model'
-            registry_name = 'stock_prediction_random_forest'
-        elif best_model_type == 'lstm':
+            artifact_path = "random_forest_model"
+            registry_name = "stock_prediction_random_forest"
+        elif best_model_type == "lstm":
             run_id = lstm_run_id
-            artifact_path = 'lstm_model'
-            registry_name = 'stock_prediction_lstm'
+            artifact_path = "lstm_model"
+            registry_name = "stock_prediction_lstm"
 
-        print(f"{model_name} model performed best with RMSE: {best_rmse:.4f}. " +
-            "Registering this model...")
-
+        print(
+            f"{model_name} model performed best with RMSE: {best_rmse:.4f}. "
+            + "Registering this model..."
+        )
 
         model_path = f"runs:/{run_id}/{artifact_path}"
         model_version = mlflow.register_model(model_path, registry_name)
@@ -478,10 +496,16 @@ def main():
 
         # Create comparison plot of all models
         plt.figure(figsize=(12, 8))
-        plt.bar(['Linear Regression', 'Random Forest', 'LSTM'], [
-                lr_metrics['test_rmse'], rf_metrics['test_rmse'], lstm_metrics['test_rmse']])
-        plt.title('Model Comparison - Test RMSE')
-        plt.ylabel('RMSE (lower is better)')
+        plt.bar(
+            ["Linear Regression", "Random Forest", "LSTM"],
+            [
+                lr_metrics["test_rmse"],
+                rf_metrics["test_rmse"],
+                lstm_metrics["test_rmse"],
+            ],
+        )
+        plt.title("Model Comparison - Test RMSE")
+        plt.ylabel("RMSE (lower is better)")
         plt.ylim(bottom=0)
 
         comparison_plot_path = "model_comparison.png"
@@ -500,6 +524,7 @@ def main():
     except Exception as e:
         print(f"Error: {str(e)}")
         import traceback
+
         traceback.print_exc()
 
 

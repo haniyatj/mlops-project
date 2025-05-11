@@ -29,31 +29,31 @@ def compute_rsi(price_series, period=14):
     return rsi
 
 
-def prepare_data_for_serving(file_path, target_col='close', lookback=5):
+def prepare_data_for_serving(file_path, target_col="close", lookback=5):
     """Prepare data for prediction when serving the model."""
     # Load and preprocess data
     df = pd.read_csv(file_path)
-    if 'Date' in df.columns:
-        df['Date'] = pd.to_datetime(df['Date'])
-        df.set_index('Date', inplace=True)
+    if "Date" in df.columns:
+        df["Date"] = pd.to_datetime(df["Date"])
+        df.set_index("Date", inplace=True)
 
     # Create features similar to training
     df_copy = df.copy()
 
     # Add technical indicators
-    df_copy['MA5'] = df_copy[target_col].rolling(window=5).mean()
-    df_copy['MA20'] = df_copy[target_col].rolling(window=20).mean()
-    df_copy['RSI'] = compute_rsi(df_copy[target_col])
+    df_copy["MA5"] = df_copy[target_col].rolling(window=5).mean()
+    df_copy["MA20"] = df_copy[target_col].rolling(window=20).mean()
+    df_copy["RSI"] = compute_rsi(df_copy[target_col])
 
     # Create lagged features
     for i in range(1, lookback + 1):
-        df_copy[f'{target_col}_lag_{i}'] = df_copy[target_col].shift(i)
+        df_copy[f"{target_col}_lag_{i}"] = df_copy[target_col].shift(i)
 
     # Add volatility features that were missing
-    df_copy['volatility'] = df_copy[target_col].rolling(window=10).std()
+    df_copy["volatility"] = df_copy[target_col].rolling(window=10).std()
 
     # Add price momentum that was missing
-    df_copy['momentum'] = df_copy[target_col].pct_change(periods=5)
+    df_copy["momentum"] = df_copy[target_col].pct_change(periods=5)
 
     # Remove rows with NaN values
     df_copy.dropna(inplace=True)
@@ -68,7 +68,7 @@ def prepare_data_for_lstm(features, target, lookback=5):
     """Prepare data for LSTM model by reshaping into time sequences."""
     X, y = [], []
     for i in range(len(features) - lookback):
-        X.append(features.iloc[i:i + lookback].values)
+        X.append(features.iloc[i : i + lookback].values)
         y.append(target.iloc[i + lookback])
     return np.array(X), np.array(y)
 
@@ -111,25 +111,27 @@ def serve_saved_model(model_type, data_path):
 
         # Prepare data - using 'close' as target column
         features, actual = prepare_data_for_serving(
-            data_path, target_col='close', lookback=5)
+            data_path, target_col="close", lookback=5
+        )
 
         # Make predictions based on model type
         if is_lstm:
             # For LSTM models we need to reshape the data
             X_scaled = scaler_X.transform(features)
             X_scaled_df = pd.DataFrame(
-                X_scaled,
-                index=features.index,
-                columns=features.columns)
+                X_scaled, index=features.index, columns=features.columns
+            )
 
             # Prepare sequences for LSTM
             lookback = 5
             X_lstm, y_lstm = prepare_data_for_lstm(
-                X_scaled_df, actual, lookback)
+                X_scaled_df, actual, lookback
+            )
 
             # Reshape for LSTM [samples, time steps, features]
             X_lstm = X_lstm.reshape(
-                (X_lstm.shape[0], lookback, X_scaled_df.shape[1]))
+                (X_lstm.shape[0], lookback, X_scaled_df.shape[1])
+            )
 
             # Make predictions
             predictions_scaled = model.predict(X_lstm)
@@ -137,24 +139,26 @@ def serve_saved_model(model_type, data_path):
 
             # Adjust the results to match the actual values length
             # LSTM predictions will be shorter due to the lookback window
-            actual = actual.iloc[lookback:].iloc[:len(predictions)]
+            actual = actual.iloc[lookback:].iloc[: len(predictions)]
         else:
             # Standard models (Linear Regression, Random Forest)
             predictions = model.predict(features)
 
         # Display results
-        results = pd.DataFrame({
-            'Actual': actual,
-            'Predicted': predictions.flatten() if is_lstm else predictions
-        })
+        results = pd.DataFrame(
+            {
+                "Actual": actual,
+                "Predicted": predictions.flatten() if is_lstm else predictions,
+            }
+        )
 
         print("\nPrediction Results:")
         print(results.tail(10))
 
         # Calculate error metrics
-        mse = ((results['Actual'] - results['Predicted']) ** 2).mean()
+        mse = ((results["Actual"] - results["Predicted"]) ** 2).mean()
         rmse = np.sqrt(mse)
-        mae = (results['Actual'] - results['Predicted']).abs().mean()
+        mae = (results["Actual"] - results["Predicted"]).abs().mean()
 
         print("\nError Metrics on Test Data:")
         print(f"MSE: {mse:.4f}")
@@ -169,21 +173,25 @@ def serve_saved_model(model_type, data_path):
     except Exception as e:
         print(f"Error serving model: {str(e)}")
         import traceback
+
         traceback.print_exc()
         print("Make sure the model files exist in the models directory.")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Serve locally saved model for predictions")
+        description="Serve locally saved model for predictions"
+    )
     parser.add_argument(
         "--model",
         default="linear_regression",
-        help="Model type (linear_regression, random_forest, or lstm)")
+        help="Model type (linear_regression, random_forest, or lstm)",
+    )
     parser.add_argument(
         "--data",
         default="data/AAPL_daily_cleaned.csv",
-        help="Path to input data")
+        help="Path to input data",
+    )
 
     args = parser.parse_args()
 
