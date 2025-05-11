@@ -150,27 +150,19 @@ jobs:
           echo "Creating pool for stock data tasks..."
           docker compose -f docker-compose-test.yml exec -T airflow airflow pools set stock_data_pool 5 "Pool for stock data tasks"
 
-          # Ensure airflow user and group exist, then change ownership and permissions
+          # Make scripts executable inside the container
           docker compose -f docker-compose-test.yml exec -T airflow bash -c "
-            if ! id airflow &>/dev/null; then
-              useradd -r -s /bin/bash airflow;
-            fi
-            if ! getent group airflow &>/dev/null; then
-              groupadd airflow;
-            fi
+            chmod +x /opt/airflow/scripts/*.py || echo 'No scripts to chmod'
           "
 
-          echo "Making scripts executable inside the container..."
-          docker compose -f docker-compose-test.yml exec -T airflow bash -c "mkdir -p /opt/airflow/scripts"
-
-          # Fix the permissions for the scripts directory
+          echo "Executing Python scripts..."
           docker compose -f docker-compose-test.yml exec -T airflow bash -c "
-            chown -R airflow:airflow /opt/airflow/scripts;
-            chmod +x /opt/airflow/scripts/*.py
+            python /opt/airflow/scripts/fetch_stock.py
+            python /opt/airflow/scripts/clean_stock.py
+            python /opt/airflow/scripts/baseline_model.py
+            python /opt/airflow/scripts/serve_model.py
+            python /opt/airflow/scripts/setup_mlflow.py
           "
-
-          # Create the script files
-          docker compose -f docker-compose-test.yml exec -T airflow bash -c "touch /opt/airflow/scripts/fetch_stock.py /opt/airflow/scripts/clean_stock.py"
 
           echo "Directory structure:"
           docker compose -f docker-compose-test.yml exec -T airflow bash -c "find /opt/airflow -type f | sort"
