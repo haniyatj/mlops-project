@@ -12,7 +12,7 @@ jobs:
 
     services:
       docker:
-        image: apache/airflow:2.6.0  # Airflow Docker image
+        image: aiyzajunaid/mlops-project-airflow:latest  # Custom Airflow image from Docker Hub
         options: --privileged # Allow Docker inside Docker if needed
 
     steps:
@@ -21,29 +21,31 @@ jobs:
 
     - name: Set up Docker
       run: |
-        # Start Airflow container using Docker
-        docker run -d -p 8081:8080 --name airflow apache/airflow:2.6.0
+        # Pull and start the Airflow container from Docker Hub
+        docker run -d -p 8081:8080 --name airflow aiyzajunaid/mlops-project-airflow:latest
         # Install Python dependencies in the Airflow container using sudo
         docker exec airflow sudo pip install --upgrade pip
         docker exec airflow sudo pip install -r requirements.txt
 
     - name: Install flake8 and pytest (for linting and tests)
       run: |
-        # Install flake8 and pytest in the runner container
+        # Install flake8 and pytest in the GitHub runner (not inside the container)
         python -m pip install --upgrade pip
         pip install flake8 pytest
 
     - name: Lint with flake8
       run: |
+        # Run linting using flake8 in the GitHub runner (not in the container)
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
     - name: Run tests
       run: |
-        # Run tests inside the Airflow container using sudo
+        # Run tests inside the Airflow container using pytest
         docker exec airflow sudo pytest tests/test.py
         # Stop the container after tests
         docker stop airflow
 
     - name: Clean up Docker
       run: |
-        docker rm airflow  # Remove the Airflow container after the test
+        # Remove the Airflow container after the test
+        docker rm airflow
