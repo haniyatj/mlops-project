@@ -142,12 +142,12 @@ def predict():
         # Calculate error metrics
         mse = (
             (np.array([item["actual"] for item in data])
-            - np.array([item["predicted"] for item in data])) ** 2
-            ).mean()
+             - np.array([item["predicted"] for item in data])) ** 2
+        ).mean()
         rmse = np.sqrt(mse)
         mae = (
             np.abs(np.array([item["actual"] for item in data])
-            - np.array([item["predicted"] for item in data]))
+                   - np.array([item["predicted"] for item in data]))
         ).mean()
 
         return jsonify({

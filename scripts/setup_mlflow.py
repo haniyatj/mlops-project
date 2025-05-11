@@ -27,7 +27,7 @@ def setup_mlflow(
     ]
 
     print(f"Starting MLflow server with command: {' '.join(cmd)}")
-    print(f"MLflow UI will be available at http://localhost:5000")
+    print("MLflow UI will be available at http://localhost:5000")
     print(f"Backend store: {backend_store_uri}")
     print(f"Artifact store: {artifact_store}")
     print("\nPress Ctrl+C to stop the server.")

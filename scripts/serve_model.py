@@ -157,7 +157,7 @@ def serve_saved_model(model_type, data_path):
         rmse = np.sqrt(mse)
         mae = (results['Actual'] - results['Predicted']).abs().mean()
 
-        print(f"\nError Metrics on Test Data:")
+        print("\nError Metrics on Test Data:")
         print(f"MSE: {mse:.4f}")
         print(f"RMSE: {rmse:.4f}")
         print(f"MAE: {mae:.4f}")
