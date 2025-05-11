@@ -12,7 +12,7 @@ from airflow.models import DagBag
 
 @pytest.fixture()
 def dagbag():
-    return DagBag(dag_folder=".", include_examples=False)
+    return DagBag(dag_folder="./dags/", include_examples=False)
 
 def test_dag_loaded(dagbag):
     dag_id = "data_collection_preprocessing_pipeline"
