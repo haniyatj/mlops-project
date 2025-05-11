@@ -154,6 +154,8 @@ jobs:
           docker compose -f docker-compose-test.yml exec -T airflow bash -c "
             chmod +x /opt/airflow/scripts/*.py || echo 'No scripts to chmod'
           "
+          echo "Installing pytest..."
+          docker compose -f docker-compose-test.yml exec -T airflow pip install pytest
 
       - name: Run tests
         run: |
