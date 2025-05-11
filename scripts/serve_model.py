@@ -10,7 +10,6 @@ import numpy as np
 import joblib
 import argparse
 from tensorflow.keras.models import load_model
-from sklearn.preprocessing import MinMaxScaler
 
 
 def compute_rsi(price_series, period=14):

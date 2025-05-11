@@ -448,7 +448,9 @@ def main():
             joblib.dump(best_scalers[0], scaler_X_path)
             joblib.dump(best_scalers[1], scaler_y_path)
             print(
-                f"Saved LSTM model to {model_path} and scalers to {scaler_X_path}, {scaler_y_path}")
+              f"Saved LSTM model to {model_path} " + \
+              f"and scalers to {scaler_X_path}, {scaler_y_path}")
+
 
         # Register the best model in MLflow Model Registry
         model_name, run_id, artifact_path, registry_name = best_model_name, None, None, None
@@ -466,8 +468,9 @@ def main():
             artifact_path = 'lstm_model'
             registry_name = 'stock_prediction_lstm'
 
-        print(
-            f"{model_name} model performed best with RMSE: {best_rmse:.4f}. Registering this model...")
+        print(f"{model_name} model performed best with RMSE: {best_rmse:.4f}. " +
+            "Registering this model...")
+
 
         model_path = f"runs:/{run_id}/{artifact_path}"
         model_version = mlflow.register_model(model_path, registry_name)
