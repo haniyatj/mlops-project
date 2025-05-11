@@ -22,10 +22,10 @@ jobs:
     - name: Set up Docker
       run: |
         # Start Airflow container using Docker
-        docker run -d -p 8080:8080 --name airflow apache/airflow:2.6.0
-        # Install Python dependencies in the Airflow container
-        docker exec airflow pip install --upgrade pip
-        docker exec airflow pip install -r requirements.txt
+        docker run -d -p 8081:8080 --name airflow apache/airflow:2.6.0
+        # Install Python dependencies in the Airflow container using sudo
+        docker exec airflow sudo pip install --upgrade pip
+        docker exec airflow sudo pip install -r requirements.txt
 
     - name: Install flake8 and pytest (for linting and tests)
       run: |
@@ -39,8 +39,8 @@ jobs:
 
     - name: Run tests
       run: |
-        # Run tests inside the Airflow container (without the -T flag)
-        docker exec airflow pytest tests/test.py
+        # Run tests inside the Airflow container using sudo
+        docker exec airflow sudo pytest tests/test.py
         # Stop the container after tests
         docker stop airflow
 
