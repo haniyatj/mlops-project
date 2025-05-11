@@ -4,3 +4,11 @@ mlflow.db
 /dags/__pycache__
 # /models
 /tests/__pycache__
+
+
+# Airflow
+logs/
+airflow.db
+airflow.cfg
+webserver_config.py
+unittests.cfg

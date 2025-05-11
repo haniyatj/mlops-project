@@ -15,7 +15,7 @@ symbol = "AAPL"  # Change this to the stock symbol you want (e.g., MSFT, TSLA)
 function = "TIME_SERIES_DAILY"
 outputsize = "compact"  # or "full" for more data
 
-url = f"https://www.alphavantage.co/query"
+url = "https://www.alphavantage.co/query"
 params = {
     "function": function,
     "symbol": symbol,
