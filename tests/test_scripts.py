@@ -67,4 +67,3 @@ def test_clean_stock_script_runs():
     assert any(
         f.startswith("processed_stock_") for f in files
     ), "No processed stock data file was created"
-    

@@ -67,7 +67,6 @@ def test_bash_commands_reference_existing_scripts(dagbag):
     """
     Test that the bash commands in the tasks reference existing script files.
     """
-    
     # Check if scripts directory exists in the container
     scripts_dir = "/opt/airflow/scripts"
     assert os.path.exists(
