@@ -47,7 +47,7 @@ jobs:
         run: flake8 . --max-line-length=79 --ignore=E203,W503
 
       - name: Start Docker Compose
-        run: docker compose -f docker-compose.yml up -d
+        run: docker compose -f docker-compose.yaml up -d
 
       - name: Wait for Airflow to be ready
         run: |
@@ -62,7 +62,7 @@ jobs:
         run: |
           docker compose exec -T airflow airflow db init
           docker compose exec -T airflow airflow users create \
-            -r Admin -u admin -p admin -e admin@example.com -f admin -l admin
+            -r Admin -u admin -p admin -e aiyza.junaid@gmail.com -f admin -l admin
 
       - name: Run tests
         run: docker compose exec -T airflow pytest tests/test.py
