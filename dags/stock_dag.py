@@ -14,7 +14,7 @@ default_args = {
 with DAG(
     dag_id='data_collection_preprocessing_pipeline',
     default_args=default_args,
-    schedule='@daily',
+    schedule_interval='@daily',
     catchup=False,
     description='Pipeline to fetch and preprocess stock data',
 ) as dag:
