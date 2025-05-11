@@ -6,7 +6,7 @@ pipeline {
     }
 
     environment {
-        DOCKER_HUB_CREDS = credentials('dockerhub-credentials')
+        DOCKER_HUB_CREDS = credentials('docker-hub-credentials')
         IMAGE_NAME = 'aiyzajunaid/model-api'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
         DEPLOY_ENV = "${params.DEPLOY_ENV ?: 'dev'}"  // Default to 'dev' if not specified
