@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-stock-prediction
+  labels:
+    app: flask-stock-prediction
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: flask-stock-prediction
+  template:
+    metadata:
+      labels:
+        app: flask-stock-prediction
+    spec:
+      containers:
+        - name: flask-stock-prediction-container
+          image: aiyzajunaid/model-api:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: MODEL_PATH
+              value: "/app/models/linear_regression_model.joblib"
+            - name: PORT
+              value: "8000"
+            - name: DEBUG
+              value: "False"
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-stock-prediction-service
+spec:
+  selector:
+    app: flask-stock-prediction
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+  type: LoadBalancer
