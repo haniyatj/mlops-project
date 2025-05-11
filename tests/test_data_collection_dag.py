@@ -1,10 +1,12 @@
 """
 Test file for the data collection and preprocessing DAG
 """
+
 import os
 import pytest
 from airflow.models import DagBag
 from airflow.operators.bash import BashOperator
+
 
 @pytest.fixture()
 def dagbag():
@@ -15,7 +17,9 @@ def dagbag():
     if dagbag.import_errors:
         print(f"DAG import errors: {dagbag.import_errors}")
 
-    assert dagbag.import_errors == {}, f"DAG import errors: {dagbag.import_errors}"
+    assert (
+        dagbag.import_errors == {}
+    ), f"DAG import errors: {dagbag.import_errors}"
     return dagbag
 
 
@@ -71,12 +75,16 @@ def test_bash_commands_reference_existing_scripts(dagbag):
 
     # Check if scripts directory exists in the container
     scripts_dir = "/opt/airflow/scripts"
-    assert os.path.exists(scripts_dir), f"Scripts directory {scripts_dir} does not exist"
+    assert os.path.exists(
+        scripts_dir
+    ), f"Scripts directory {scripts_dir} does not exist"
 
     # Check if script files exist in the container
     for script_name in ["fetch_stock.py", "clean_stock.py"]:
         script_path = os.path.join(scripts_dir, script_name)
-        assert os.path.exists(script_path), f"Script file {script_path} does not exist"
+        assert os.path.exists(
+            script_path
+        ), f"Script file {script_path} does not exist"
 
 
 def test_scripts_are_executable(dagbag):
@@ -86,4 +94,6 @@ def test_scripts_are_executable(dagbag):
     scripts_dir = "/opt/airflow/scripts"
     for script_name in ["fetch_stock.py", "clean_stock.py"]:
         script_path = os.path.join(scripts_dir, script_name)
-        assert os.access(script_path, os.X_OK), f"Script file {script_path} is not executable"
+        assert os.access(
+            script_path, os.X_OK
+        ), f"Script file {script_path} is not executable"
