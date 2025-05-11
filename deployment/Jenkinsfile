@@ -1,0 +1,103 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'DEPLOY_ENV', choices: ['dev', 'test', 'prod'], description: 'Deployment Environment')
+    }
+
+    environment {
+        DOCKER_HUB_CREDS = credentials('docker-hub-credentials')
+        IMAGE_NAME = 'aiyzajunaid/model-api'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+        DEPLOY_ENV = "${params.DEPLOY_ENV ?: 'dev'}"  // Default to 'dev' if not specified
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Setup API Directory') {
+            steps {
+                bat '''
+                    if not exist api mkdir api
+
+                    copy /Y app.py api\\
+                    copy /Y requirements.txt api\\
+
+                    xcopy config api\\config /E /I /Y
+
+                    if not exist api\\models mkdir api\\models
+                    copy /Y models\\linear_regression_model.joblib api\\models\\
+                '''
+            }
+        }
+
+        stage('Configure Environment') {
+            steps {
+                bat '''
+                    copy /Y config\\env.%DEPLOY_ENV% api\\.env
+                '''
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                bat '''
+                    docker build -t %IMAGE_NAME%:%IMAGE_TAG% -f api\\Dockerfile .
+                    docker tag %IMAGE_NAME%:%IMAGE_TAG% %IMAGE_NAME%:latest
+                '''
+            }
+        }
+
+        stage('Test Docker Image') {
+            steps {
+                bat '''
+                    docker run --name test-container -d -p 8000:8000 %IMAGE_NAME%:%IMAGE_TAG%
+                    set RETRIES=10
+                    :waitloop
+                    curl -f http://localhost:8000/health
+                    if %ERRORLEVEL% equ 0 (
+                        echo Server is healthy.
+                    ) else (
+                        echo Waiting for server to respond...
+                        timeout /T 3 >nul
+                        set /A RETRIES=%RETRIES%-1
+                        if %RETRIES% leq 0 (
+                            echo Health check failed. Container logs:
+                            docker logs test-container
+                            exit /B 1
+                        )
+                        goto waitloop
+                    )
+
+                    docker stop test-container
+                    docker rm test-container
+                '''
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                bat '''
+                    echo %DOCKER_HUB_CREDS_PSW% | docker login -u %DOCKER_HUB_CREDS_USR% --password-stdin
+                    docker push %IMAGE_NAME%:%IMAGE_TAG%
+                    docker push %IMAGE_NAME%:latest
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            bat '''
+                docker logout
+                docker rmi %IMAGE_NAME%:%IMAGE_TAG% %IMAGE_NAME%:latest || exit /B 0
+                docker rm -f test-container || exit /B 0
+            '''
+            archiveArtifacts artifacts: 'api/**', allowEmptyArchive: true
+        }
+    }
+}
