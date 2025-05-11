@@ -2,3 +2,5 @@ venv/
 mlruns/
 mlflow.db
 /dags/__pycache__
+# /models
+/tests/__pycache__
