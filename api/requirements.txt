@@ -1,5 +1,5 @@
-flask==2.0.1
-Werkzeug==2.0.1
+flask>=2.2,<2.3
+Werkzeug>=2.2.0,<2.3.0
 pandas>=1.5.3
 numpy>=1.23.0
 joblib>=1.2.0
