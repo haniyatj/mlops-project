@@ -90,14 +90,14 @@ jobs:
                 - ./data:/opt/airflow/data
                 - ./processed:/opt/airflow/processed
               environment:
-                - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-                - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
-                - AIRFLOW__CORE__LOAD_EXAMPLES=False
-                - AIRFLOW__CORE__DAGS_FOLDER=/opt/airflow/dags
-                - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=True
-                - AIRFLOW__CORE__LOAD_DEFAULT_CONNECTIONS=False
-                - AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=30
-                - AIRFLOW__CORE__LOGGING_LEVEL=INFO
+                - AIRFLOW_CORE_EXECUTOR=LocalExecutor
+                - AIRFLOW_DATABASE_SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+                - AIRFLOW_CORE_LOAD_EXAMPLES=False
+                - AIRFLOW_CORE_DAGS_FOLDER=/opt/airflow/dags
+                - AIRFLOW_WEBSERVER_EXPOSE_CONFIG=True
+                - AIRFLOW_CORE_LOAD_DEFAULT_CONNECTIONS=False
+                - AIRFLOW_SCHEDULER_DAG_DIR_LIST_INTERVAL=30
+                - AIRFLOW_CORE_LOGGING_LEVEL=INFO
           EOL
 
       - name: Verify Docker installation
