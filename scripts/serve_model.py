@@ -1,7 +1,6 @@
 """
 Serve saved models for making stock predictions.
 
-This script loads a saved model from the models directory and uses it to make predictions.
 """
 
 import os

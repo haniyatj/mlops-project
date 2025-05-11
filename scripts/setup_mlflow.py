@@ -10,8 +10,10 @@ def setup_mlflow(
     Set up and start an MLflow tracking server.
 
     Parameters:
-        backend_store_uri: URI for the database where MLflow will store run parameters, metrics, etc.
-        artifact_store: Directory where MLflow will store artifacts (models, plots, etc.)
+        backend_store_uri: URI for the database where MLflow
+        will store run parameters, metrics, etc.
+        artifact_store: Directory where MLflow will
+        store artifacts (models, plots, etc.)
     """
     # Ensure artifact store directory exists
     if not os.path.exists(artifact_store):
