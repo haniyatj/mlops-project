@@ -1,4 +1,4 @@
-name: CI - Lint and Test with Docker
+name: CI - Lint and Test
 
 on:
   push:
@@ -10,42 +10,24 @@ jobs:
   lint-and-test:
     runs-on: ubuntu-latest
 
-    services:
-      docker:
-        image: aiyzajunaid/mlops-project-airflow:latest  # Custom Airflow image from Docker Hub
-        options: --privileged # Allow Docker inside Docker if needed
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Docker
-      run: |
-        # Pull and start the Airflow container from Docker Hub
-        docker run -d -p 8081:8080 --name airflow aiyzajunaid/mlops-project-airflow:latest
-        # Install Python dependencies in the Airflow container using sudo
-        docker exec airflow sudo pip install --upgrade pip
-        docker exec airflow sudo pip install -r requirements.txt
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
 
-    - name: Install flake8 and pytest (for linting and tests)
+    - name: Install dependencies
       run: |
-        # Install flake8 and pytest in the GitHub runner (not inside the container)
         python -m pip install --upgrade pip
-        pip install flake8 pytest
+        pip install flake8 pytest apache-airflow
 
     - name: Lint with flake8
       run: |
-        # Run linting using flake8 in the GitHub runner (not in the container)
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 
     - name: Run tests
       run: |
-        # Run tests inside the Airflow container using pytest
-        docker exec airflow sudo pytest tests/test.py
-        # Stop the container after tests
-        docker stop airflow
-
-    - name: Clean up Docker
-      run: |
-        # Remove the Airflow container after the test
-        docker rm airflow
+        pytest tests/test.py
