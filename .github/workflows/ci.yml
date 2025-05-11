@@ -69,7 +69,6 @@ jobs:
         run: |
           echo "Creating docker-compose-test.yml file..."
           cat > docker-compose-test.yml <<EOL
-          version: '3'
           services:
             postgres:
               image: postgres:13
@@ -84,6 +83,7 @@ jobs:
 
             airflow:
               image: apache/airflow:2.7.1
+              command: standalone
               depends_on:
                 - postgres
               volumes:
