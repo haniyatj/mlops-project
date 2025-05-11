@@ -130,17 +130,25 @@ def predict():
         for i, (idx, act, pred) in enumerate(
                 zip(actual.index, actual, predictions)):
             data.append({
-                "date": idx.strftime('%Y-%m-%d') if hasattr(idx, 'strftime') else str(idx),
+                "date": (
+                    idx.strftime('%Y-%m-%d')
+                    if hasattr(idx, 'strftime')
+                    else str(idx)
+                ),
                 "actual": float(act),
                 "predicted": float(pred)
             })
 
         # Calculate error metrics
-        mse = ((np.array([item["actual"] for item in data]) -
-                np.array([item["predicted"] for item in data])) ** 2).mean()
+        mse = (
+            (np.array([item["actual"] for item in data])
+            - np.array([item["predicted"] for item in data])) ** 2
+            ).mean()
         rmse = np.sqrt(mse)
-        mae = np.abs(np.array([item["actual"] for item in data]) -
-                     np.array([item["predicted"] for item in data])).mean()
+        mae = (
+            np.abs(np.array([item["actual"] for item in data])
+            - np.array([item["predicted"] for item in data]))
+        ).mean()
 
         return jsonify({
             "model": "linear_regression",
