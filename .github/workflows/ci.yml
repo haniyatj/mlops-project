@@ -3,7 +3,8 @@ name: Airflow + Flake8 + Tests
 on:
   push:
     branches:
-      - [main, test]
+      - main
+      - 'test*'
   pull_request:
     branches:
       - main
