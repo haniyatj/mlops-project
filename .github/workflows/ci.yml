@@ -3,14 +3,14 @@ name: Airflow + Flake8 + Tests
 on:
   push:
     branches:
-      - main
+      - [main, test]
   pull_request:
     branches:
       - main
 
 jobs:
   lint-and-test:
-    runs-on: windows-latest  
+    runs-on: windows-latest
 
     services:
       postgres:
