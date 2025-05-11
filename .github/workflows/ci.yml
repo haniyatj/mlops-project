@@ -38,31 +38,34 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: |
-          pip install -r api/requirements.txt
+        run: pip install -r api/requirements.txt
 
       - name: Install Flake8
-        run: |
-          pip install flake8
+        run: pip install flake8
 
       - name: Run Flake8 linting
-        run: |
-          flake8 . --max-line-length=79 --ignore=E203,W503
+        run: flake8 . --max-line-length=79 --ignore=E203,W503
 
-      - name: Set up Docker Compose
-        run: |
-          docker-compose -f docker-compose.yml up -d
+      - name: Start Docker Compose
+        run: docker compose -f docker-compose.yml up -d
 
-      - name: Wait for Airflow and Database to be Ready
+      - name: Wait for Airflow to be ready
         run: |
-          docker-compose exec -T airflow bash -c "airflow db init"
-          docker-compose exec -T airflow bash -c "airflow users create -r Admin -u admin -p admin -e admin@example.com -f admin -l admin"
-          docker-compose exec -T airflow bash -c "airflow webserver -D"
-          docker-compose exec -T airflow bash -c "airflow scheduler -D"
+          echo "Waiting for Airflow to be ready..."
+          until docker compose exec -T airflow bash -c "airflow db check" > /dev/null 2>&1; do
+            echo "Waiting..."
+            sleep 5
+          done
+          echo "Airflow is ready."
+
+      - name: Initialize Airflow and create admin user
+        run: |
+          docker compose exec -T airflow airflow db init
+          docker compose exec -T airflow airflow users create \
+            -r Admin -u admin -p admin -e admin@example.com -f admin -l admin
 
       - name: Run tests
-        run: |
-          docker-compose exec -T airflow bash -c "pytest tests/test.py"
+        run: docker compose exec -T airflow pytest tests/test.py
 
       - name: Shutdown Docker Compose
-        run: docker-compose down
+        run: docker compose down
